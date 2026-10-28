@@ -1,0 +1,13 @@
+{
+  "name": "todo-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @todo/api",
+    "test": "npm run test --workspace @todo/api",
+    "start": "npm run start --workspace @todo/api"
+  }
+}

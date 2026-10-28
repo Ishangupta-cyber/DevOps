@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f6f1" />
+    <title>Daymark | Todo</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Daymark home"><span class="brand-mark">D</span> daymark</a>
+      <span class="topbar-note">A calmer way to get things done</span>
+      <span class="status"><span class="status-dot"></span> All changes saved</span>
+    </header>
+
+    <main class="workspace">
+      <aside class="rail" aria-label="Workspace">
+        <p class="rail-label">WORKSPACE</p>
+        <button class="nav-item nav-item-active" type="button"><span class="nav-icon">[]</span> My tasks <span id="nav-count" class="nav-count">0</span></button>
+        <div class="rail-note">
+          <span class="note-spark">*</span>
+          <p>Small steps add up.<br /><strong>Keep your pace.</strong></p>
+        </div>
+        <div class="rail-footer">YOUR SPACE <span>01</span></div>
+      </aside>
+
+      <section class="task-panel" aria-labelledby="page-title">
+        <div class="date-line"><span class="date-rule"></span><span id="today-label">TODAY</span></div>
+        <div class="heading-row">
+          <div>
+            <p class="eyebrow">A FRESH PAGE</p>
+            <h1 id="page-title">Make room<br />for what matters.</h1>
+          </div>
+          <div class="progress-ring" aria-label="Tasks completed">
+            <span id="progress-value">0%</span>
+            <small>DONE</small>
+          </div>
+        </div>
+
+        <form id="todo-form" class="add-form">
+          <label class="visually-hidden" for="todo-input">Add a task</label>
+          <span class="add-symbol">+</span>
+          <input id="todo-input" name="title" type="text" maxlength="200" placeholder="What needs your attention?" autocomplete="off" required />
+          <button type="submit">Add task <span aria-hidden="true">&rarr;</span></button>
+        </form>
+        <p id="error-message" class="error-message" role="alert" hidden></p>
+
+        <div class="list-heading">
+          <div><h2>Your list</h2><span id="list-count" class="list-count">0 tasks</span></div>
+          <div class="filters" role="group" aria-label="Filter tasks">
+            <button type="button" class="filter-button active" data-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="filter-button" data-filter="open" aria-pressed="false">To do</button>
+            <button type="button" class="filter-button" data-filter="done" aria-pressed="false">Done</button>
+          </div>
+        </div>
+
+        <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
+        <div id="empty-state" class="empty-state">
+          <span class="empty-mark">+</span>
+          <p>Your list is clear.</p>
+          <span>Add a task above to get started.</span>
+        </div>
+        <footer class="panel-footer"><span><span class="footer-dot"></span> Saved to your workspace</span><span>ONE THING AT A TIME</span></footer>
+      </section>
+    </main>
+  </body>
+</html>
