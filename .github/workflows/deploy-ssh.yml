@@ -1,0 +1,54 @@
+# Way 1: build both images on the GitHub runner, copy them to EC2 over SSH as
+# a tarball, load them there and start the stack. No registry involved.
+name: Deploy to EC2 (images over SSH)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      API_IMAGE: daymark-api:${{ github.sha }}
+      WEB_IMAGE: daymark-web:${{ github.sha }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build images
+        run: |
+          docker build -f apps/api/Dockerfile -t "$API_IMAGE" .
+          docker build -t "$WEB_IMAGE" apps/web
+
+      - name: Save images to a tarball
+        run: docker save "$API_IMAGE" "$WEB_IMAGE" | gzip > images.tar.gz
+
+      - name: Configure SSH
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Copy images and deploy files to EC2
+        run: |
+          ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" 'mkdir -p ~/daymark'
+          scp -i ~/.ssh/ec2.pem images.tar.gz deploy/* "$EC2_USER@$EC2_HOST:~/daymark/"
+
+      - name: Load images and deploy
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" "
+            set -e
+            gunzip -c ~/daymark/images.tar.gz | docker load
+            rm ~/daymark/images.tar.gz
+            API_IMAGE='$API_IMAGE' WEB_IMAGE='$WEB_IMAGE' POSTGRES_PASSWORD='$POSTGRES_PASSWORD' sh ~/daymark/deploy.sh
+          "

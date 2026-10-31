@@ -1,0 +1,63 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+
+jobs:
+  backend_CI:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5 # repo code ko pull karne ke liye
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5 # Node.js setup
+
+        with:
+          node-version: 22
+          cache: npm # Cache node_modules and package-lock.json
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+        
+      # - name: build
+      #   run: npm run build
+      # why build is not there in express backend 
+      # build is not required in express backend because it is a runtime environment and does not require a build step like frontend frameworks (React, Angular, etc.) that need to be compiled into static files. Express applications are typically run directly from the source code without a separate build process.
+
+
+
+
+  frontend_CI:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm # Cache node_modules and package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build --prefix apps/web
+
+      # here we are using --prefix to specify the working directory for the build command, which is apps/web. This is necessary because the frontend code is located in a subdirectory of the repository, and we want to ensure that the build command is executed in the correct context.
+
+      

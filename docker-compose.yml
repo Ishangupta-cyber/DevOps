@@ -1,8 +1,28 @@
+# Local development stack: builds both images from source.
+#   docker compose up --build   ->  http://localhost:8080
+#   docker compose up --scale api=5   ->  change the number of api replicas
 services:
-  app:
-    build: .
+  web:
+    build: ./apps/web
     ports:
-      - "3000:3000"
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    # Three api containers behind the nginx load balancer in the web image.
+    # No host port: three containers cannot all bind localhost:3000.
+    deploy:
+      replicas: 3
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     environment:
       PORT: 3000
       DATABASE_URL: postgres://todo:todo@postgres:5432/todo
@@ -37,7 +57,3 @@ services:
 
 volumes:
   postgres-data:
-
-# networks:
-#   default:
-#     name: todo-network

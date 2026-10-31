@@ -1,13 +1,17 @@
 import express from 'express';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 
-const webDirectory = fileURLToPath(new URL('../../web/', import.meta.url));
 const todoCacheKey = 'todos:all';
 
 export function createApp({ repository, cache }) {
   const app = express();
   app.use(express.json());
+
+  // Tells which api replica answered; the hostname is the container ID.
+  app.use((_request, response, next) => {
+    response.set('X-Served-By', os.hostname());
+    next();
+  });
 
   app.get('/api/health', (_request, response) => {
     response.json({ status: 'ok' });
@@ -83,8 +87,6 @@ export function createApp({ repository, cache }) {
       next(error);
     }
   });
-
-  app.use(express.static(webDirectory));
 
   app.use((error, _request, response, _next) => {
     console.error(error);

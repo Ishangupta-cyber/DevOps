@@ -38,15 +38,29 @@ const repository = {
   }
 };
 
+// Several api replicas start at the same time, and concurrent
+// CREATE TABLE IF NOT EXISTS can fail in Postgres. An advisory lock lets
+// only one replica create the table while the others wait.
+async function createSchema() {
+  const client = await pool.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock(1)');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS todos (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+  } finally {
+    await client.query('SELECT pg_advisory_unlock(1)').catch(() => {});
+    client.release();
+  }
+}
+
 async function start() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS todos (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(200) NOT NULL,
-      completed BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+  await createSchema();
   await cache.connect();
 
   const app = createApp({ repository, cache });
